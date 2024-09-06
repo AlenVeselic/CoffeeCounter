@@ -141,6 +141,29 @@ export const getTodaysCoffeeAmount = async (
 
   return todaysCoffeeDay.amount;
 };
+
+export const getYesterdaysCoffeeAmount = async (
+  db: SQLiteDatabase,
+): Promise<number> => {
+  const allCoffeeDays: any[] = await getCoffeeDays(db);
+
+  const yesterday: Date = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(0, 0, 0, 0);
+
+  const yesterdaysCoffeeDay = allCoffeeDays.find(coffeeDay => {
+    const coffeeDayDate = new Date(coffeeDay.createdOn);
+    coffeeDayDate.setHours(0, 0, 0, 0);
+    return yesterday === coffeeDayDate;
+  });
+
+  try {
+    return yesterdaysCoffeeDay.amount;
+  } catch (e) {
+    console.error('ERROR: ', e);
+    return 0;
+  }
+};
 type Table = 'Contacts' | 'UserPreferences';
 
 export const removeTable = async (db: SQLiteDatabase, tableName: Table) => {
