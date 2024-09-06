@@ -5,25 +5,28 @@
  * @format
  */
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
+  Button,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   useColorScheme,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
+import {Colors} from 'react-native/Libraries/NewAppScreen';
 import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  addCoffeeInDb,
+  connectToDatabase,
+  createTables,
+  getTableNames,
+  getTodaysCoffeeAmount,
+} from './db/db';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -58,6 +61,34 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
+  const [coffeeDrankToday, setCoffeeDrankToday] = useState(0);
+
+  const updateCoffeeAmount = async () => {
+    const db = await connectToDatabase();
+
+    await addCoffeeInDb(db);
+
+    setCoffeeDrankToday(await getTodaysCoffeeAmount(db));
+  };
+
+  const loadData = React.useCallback(async () => {
+    // TODO: Initialize database, add communication with database
+    try {
+      const db = await connectToDatabase();
+      await createTables(db);
+
+      console.log(await getTableNames(db));
+
+      setCoffeeDrankToday(await getTodaysCoffeeAmount(db));
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
@@ -71,25 +102,19 @@ function App(): React.JSX.Element {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
-        <Header />
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            paddingBottom: 100,
+            height: useWindowDimensions().height,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+          <Text style={{fontSize: 50, textAlign: 'center'}}>
+            {coffeeDrankToday}
+          </Text>
+          <Button title="+" onPress={updateCoffeeAmount}></Button>
         </View>
       </ScrollView>
     </SafeAreaView>
