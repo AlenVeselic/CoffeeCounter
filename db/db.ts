@@ -154,7 +154,8 @@ export const getYesterdaysCoffeeAmount = async (
   const yesterdaysCoffeeDay = allCoffeeDays.find(coffeeDay => {
     const coffeeDayDate = new Date(coffeeDay.createdOn);
     coffeeDayDate.setHours(0, 0, 0, 0);
-    return yesterday === coffeeDayDate;
+
+    return yesterday.getTime() == coffeeDayDate.getTime();
   });
 
   try {
