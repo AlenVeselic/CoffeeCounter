@@ -5,6 +5,10 @@
  * @format
  */
 
+// TODO: Support landscape mode or disable it
+// TODO: Add support for looking at weeks, months, years statistics
+// TODO: Ability to add monetary value to coffee drank and keep track of that too
+
 import React, {useEffect, useState} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
@@ -151,7 +155,7 @@ function App(): React.JSX.Element {
                 },
               ]}>
               {coffeDrankYesterday && coffeDrankYesterday > 0
-                ? 'You drank x coffee yesterday.'
+                ? `You drank ${coffeDrankYesterday} coffees yesterday.`
                 : 'No coffee drank yesterday.'}
             </Text>
           </View>
