@@ -34,6 +34,7 @@ import {
   getYesterdaysCoffeeAmount,
 } from './db/db';
 import {hideNavigationBar} from 'react-native-navigation-bar-color';
+import Icon from 'react-native-vector-icons/AntDesign';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -160,38 +161,38 @@ function App(): React.JSX.Element {
             </Text>
           </View>
           <View style={{display: 'flex', alignItems: 'center'}}>
-            <Text
-              style={[
-                styles.libreFranklin,
-                {
-                  fontSize: 200,
-                  textAlign: 'center',
-                  color: darkBrown,
-                  backgroundColor: brightBrown,
-                  flexShrink: 1,
-                  width: 'auto',
-                  paddingHorizontal: 80,
-                  paddingVertical: 10,
-                  borderRadius: 150,
-                },
-              ]}>
-              {coffeeDrankToday}
-            </Text>
+            <View
+              style={{
+                position: 'relative',
+                backgroundColor: brightBrown,
+                borderRadius: 150,
+                paddingVertical: 10,
+                width: 300,
+                height: 300,
+              }}>
+              <Text
+                style={[
+                  styles.libreFranklin,
+                  {
+                    fontSize: 200,
+                    textAlign: 'center',
+                    color: darkBrown,
+
+                    flexShrink: 1,
+                  },
+                ]}>
+                {coffeeDrankToday}
+              </Text>
+            </View>
             <Pressable
               onPress={updateCoffeeAmount}
               style={{
                 backgroundColor: brightBrown,
                 marginVertical: 20,
-                paddingHorizontal: 35,
+                padding: 10,
                 borderRadius: 200,
               }}>
-              <Text
-                style={[
-                  styles.libreFranklin,
-                  {fontSize: 100, color: darkBrown},
-                ]}>
-                +
-              </Text>
+              <Icon name="plus" size={100} color={darkBrown}></Icon>
             </Pressable>
           </View>
         </View>
