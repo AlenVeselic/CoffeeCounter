@@ -70,11 +70,10 @@ export const getCoffeeDays = async (db: SQLiteDatabase): Promise<any[]> => {
     const queryResults = await db.executeSql('SELECT * FROM coffeeDay');
     queryResults?.forEach(result => {
       for (let index = 0; index < result.rows.length; index++) {
-        console.log(result.rows.item(index));
         coffeeDays.push(result.rows.item(index));
       }
     });
-    console.log(coffeeDays);
+
     return coffeeDays;
   } catch (error) {
     console.error(error);
