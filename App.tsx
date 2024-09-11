@@ -29,6 +29,7 @@ import {
   addCoffeeInDb,
   connectToDatabase,
   createTables,
+  getDailyAverageCoffeeAmount,
   getTableNames,
   getTodaysCoffeeAmount,
   getYesterdaysCoffeeAmount,
@@ -71,6 +72,7 @@ function App(): React.JSX.Element {
 
   const [coffeeDrankToday, setCoffeeDrankToday] = useState(0);
   const [coffeDrankYesterday, setCoffeeDrankYesterday] = useState(0);
+  const [average, setAverage] = useState(0);
 
   const updateCoffeeAmount = async () => {
     const db = await connectToDatabase();
@@ -90,6 +92,7 @@ function App(): React.JSX.Element {
 
       setCoffeeDrankToday(await getTodaysCoffeeAmount(db));
       setCoffeeDrankYesterday(await getYesterdaysCoffeeAmount(db));
+      setAverage(await getDailyAverageCoffeeAmount(db));
     } catch (error) {
       console.error(error);
     }
@@ -146,7 +149,7 @@ function App(): React.JSX.Element {
             paddingBottom: 100,
             height: useWindowDimensions().height + 7,
           }}>
-          <View style={{alignItems: 'center', marginTop: 150}}>
+          <View style={{alignItems: 'center', marginTop: 125}}>
             <Text
               style={[
                 styles.libreFranklin,
@@ -158,6 +161,17 @@ function App(): React.JSX.Element {
               {coffeDrankYesterday && coffeDrankYesterday > 0
                 ? `You drank ${coffeDrankYesterday} coffees yesterday.`
                 : 'No coffee drank yesterday.'}
+            </Text>
+            <Text
+              style={[
+                styles.libreFranklin,
+                {
+                  color: brightBrown,
+                  fontSize: 20,
+                  marginTop: 5,
+                },
+              ]}>
+              On average you drink {average.toFixed(1)} coffees a day.
             </Text>
           </View>
           <View style={{display: 'flex', alignItems: 'center'}}>
