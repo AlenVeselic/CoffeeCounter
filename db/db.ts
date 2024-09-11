@@ -102,8 +102,8 @@ export const updateCoffeeDay = async (
 ): Promise<void> => {
   try {
     const queryResult = await db.executeSql(
-      `UPDATE CoffeeDay SET amount = ? WHERE id = ?`,
-      [currentCoffeeDay.amount + 1, currentCoffeeDay.id],
+      `UPDATE CoffeeDay SET amount = ?, modifiedOn = ? WHERE id = ?`,
+      [currentCoffeeDay.amount + 1, Date.now(), currentCoffeeDay.id],
     );
   } catch (error) {
     console.error(error);
@@ -122,6 +122,7 @@ export const addCoffeeInDb = async (db: SQLiteDatabase): Promise<void> => {
 
   if (todaysCoffeeDay) {
     await updateCoffeeDay(db, todaysCoffeeDay);
+    return;
   }
 
   await createCoffeeDay(db);
@@ -164,7 +165,24 @@ export const getYesterdaysCoffeeAmount = async (
     return 0;
   }
 };
-type Table = 'Contacts' | 'UserPreferences';
+
+export const getDailyAverageCoffeeAmount = async (
+  db: SQLiteDatabase,
+): Promise<number> => {
+  const allCoffeeDays: any[] = await getCoffeeDays(db);
+
+  const allCoffeesDrank = allCoffeeDays.reduce(
+    (sum, coffeeDay) => sum + coffeeDay.amount,
+    0,
+  );
+
+  console.log(allCoffeeDays);
+
+  console.log(`${allCoffeesDrank}/${allCoffeeDays.length}`);
+  const average = allCoffeesDrank / allCoffeeDays.length;
+
+  return average;
+};
 
 export const removeTable = async (db: SQLiteDatabase, tableName: Table) => {
   const query = `DROP TABLE IF EXISTS ${tableName}`;
