@@ -139,7 +139,12 @@ export const getTodaysCoffeeAmount = async (
       new Date(coffeeDay.createdOn).setHours(0, 0, 0, 0),
   );
 
-  return todaysCoffeeDay.amount;
+  try {
+    return todaysCoffeeDay.amount;
+  } catch (e) {
+    console.error('ERROR: ', e);
+    return 0;
+  }
 };
 
 export const getYesterdaysCoffeeAmount = async (
