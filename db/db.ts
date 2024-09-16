@@ -1,7 +1,6 @@
 // app/db/db.ts
 
 import {
-  ResultSet,
   SQLiteDatabase,
   enablePromise,
   openDatabase,
@@ -32,6 +31,12 @@ export const createTables = async (db: SQLiteDatabase) => {
         amount INTEGER NOT NULL
       );
     `,
+    `
+    CREATE TABLE IF NOT EXISTS Coffee(
+    id INTEGER PRIMARY KEY,
+    createdOn INTEGER NOT NULL,
+    modifiedOn INTEGER NOT NULL
+    )`,
   ];
   try {
     for (let command of databaseInitiationCommands) {
@@ -43,6 +48,63 @@ export const createTables = async (db: SQLiteDatabase) => {
   } catch (error) {
     console.error(error);
     throw Error(`Failed to initialize database`);
+  }
+};
+
+export const convertCoffeeDaysToCoffees = async (db: SQLiteDatabase) => {
+  const coffeeDays = await getCoffeeDays(db);
+
+  console.log(coffeeDays);
+
+  coffeeDays.forEach(coffeeDay => {
+    for (let coffeeEntry = 0; coffeeEntry < coffeeDay.amount; coffeeEntry++) {
+      createCoffee(db, coffeeDay.createdOn, coffeeDay.modifiedOn);
+    }
+  });
+};
+
+export const createCoffee = async (
+  db: SQLiteDatabase,
+  createdOn: number = 0,
+  modifiedOn: number = 0,
+): Promise<void> => {
+  try {
+    if (createdOn === 0) createdOn = Date.now();
+    if (modifiedOn === 0) modifiedOn = createdOn;
+
+    const creationResult = await db.executeSql(
+      'INSERT INTO Coffee(createdOn, modifiedOn) VALUES (?, ?)',
+      [createdOn, modifiedOn],
+    );
+
+    return;
+  } catch (error) {
+    console.error(error);
+    throw Error('Failed to create Coffee in database');
+  }
+};
+
+export const getCoffees = async (
+  db: SQLiteDatabase,
+  orderByColumn: string = '',
+  orderBy: 'ASC' | 'DESC' = 'ASC',
+) => {
+  try {
+    const coffees: any[] = [];
+    let query = 'SELECT * FROM Coffee';
+    if (orderByColumn) query = `${query} ORDER BY ${orderByColumn} ${orderBy}`;
+
+    const queryResults = await db.executeSql(query);
+    queryResults?.forEach(result => {
+      for (let index = 0; index < result.rows.length; index++) {
+        coffees.push(result.rows.item(index));
+      }
+    });
+
+    return coffees;
+  } catch (error) {
+    console.error(error);
+    throw Error('Failed to get coffees from database');
   }
 };
 
@@ -131,16 +193,19 @@ export const addCoffeeInDb = async (db: SQLiteDatabase): Promise<void> => {
 export const getTodaysCoffeeAmount = async (
   db: SQLiteDatabase,
 ): Promise<number> => {
-  const allCoffeeDays: any[] = await getCoffeeDays(db);
+  const allCoffees: any[] = await getCoffees(db);
 
-  const todaysCoffeeDay = allCoffeeDays.find(
-    coffeeDay =>
-      new Date().setHours(0, 0, 0, 0) ===
-      new Date(coffeeDay.createdOn).setHours(0, 0, 0, 0),
-  );
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+
+  const todaysCoffees = allCoffees.filter(coffee => {
+    const coffeeDate = new Date(coffee.createdOn);
+    coffeeDate.setHours(0, 0, 0, 0);
+    return currentDate.getTime() === coffeeDate.getTime();
+  });
 
   try {
-    return todaysCoffeeDay.amount;
+    return todaysCoffees.length;
   } catch (e) {
     console.error('ERROR: ', e);
     return 0;
@@ -150,13 +215,13 @@ export const getTodaysCoffeeAmount = async (
 export const getYesterdaysCoffeeAmount = async (
   db: SQLiteDatabase,
 ): Promise<number> => {
-  const allCoffeeDays: any[] = await getCoffeeDays(db);
+  const allCoffeeDays: any[] = await getCoffees(db);
 
   const yesterday: Date = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   yesterday.setHours(0, 0, 0, 0);
 
-  const yesterdaysCoffeeDay = allCoffeeDays.find(coffeeDay => {
+  const yesterdaysCoffees = allCoffeeDays.filter(coffeeDay => {
     const coffeeDayDate = new Date(coffeeDay.createdOn);
     coffeeDayDate.setHours(0, 0, 0, 0);
 
@@ -164,7 +229,7 @@ export const getYesterdaysCoffeeAmount = async (
   });
 
   try {
-    return yesterdaysCoffeeDay.amount;
+    return yesterdaysCoffees.length;
   } catch (e) {
     console.error('ERROR: ', e);
     return 0;
@@ -174,19 +239,28 @@ export const getYesterdaysCoffeeAmount = async (
 export const getDailyAverageCoffeeAmount = async (
   db: SQLiteDatabase,
 ): Promise<number> => {
-  const allCoffeeDays: any[] = await getCoffeeDays(db);
+  const allCoffees: any[] = await getCoffees(db);
 
-  const allCoffeesDrank = allCoffeeDays.reduce(
-    (sum, coffeeDay) => sum + coffeeDay.amount,
-    0,
+  const coffeeDays = Array.from(
+    new Set(
+      allCoffees.map(coffee => {
+        const coffeeDate = new Date(coffee.createdOn);
+        coffeeDate.setHours(0, 0, 0, 0);
+
+        return coffeeDate.getTime();
+      }),
+    ),
   );
 
-  console.log(allCoffeeDays);
-
-  console.log(`${allCoffeesDrank}/${allCoffeeDays.length}`);
-  const average = allCoffeesDrank / allCoffeeDays.length;
+  const average = allCoffees.length / coffeeDays.length;
 
   return average;
+};
+
+export const getLatestCoffee = async (db: SQLiteDatabase) => {
+  const allCoffees: any[] = await getCoffees(db, 'createdOn', 'DESC');
+
+  return allCoffees[0];
 };
 
 export const removeTable = async (db: SQLiteDatabase, tableName: Table) => {
