@@ -54,8 +54,6 @@ export const createTables = async (db: SQLiteDatabase) => {
 export const convertCoffeeDaysToCoffees = async (db: SQLiteDatabase) => {
   const coffeeDays = await getCoffeeDays(db);
 
-  console.log(coffeeDays);
-
   coffeeDays.forEach(coffeeDay => {
     for (let coffeeEntry = 0; coffeeEntry < coffeeDay.amount; coffeeEntry++) {
       createCoffee(db, coffeeDay.createdOn, coffeeDay.modifiedOn);
