@@ -26,60 +26,42 @@ import {
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import {
-  addCoffeeInDb,
   connectToDatabase,
+  createCoffee,
   createTables,
   getDailyAverageCoffeeAmount,
+  getLatestCoffee,
   getTableNames,
   getTodaysCoffeeAmount,
   getYesterdaysCoffeeAmount,
 } from './db/db';
 import {hideNavigationBar} from 'react-native-navigation-bar-color';
 import Icon from 'react-native-vector-icons/AntDesign';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import {SQLiteDatabase} from 'react-native-sqlite-storage';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const [coffeeDrankToday, setCoffeeDrankToday] = useState(0);
-  const [coffeDrankYesterday, setCoffeeDrankYesterday] = useState(0);
+  const [latestCoffee, setLatestCoffee] = useState(null);
+  const [coffeDrankYesterday, setCoffeeDrankYesterday] = useState<any>(0);
   const [average, setAverage] = useState(0);
 
   const updateCoffeeAmount = async () => {
     const db = await connectToDatabase();
 
-    await addCoffeeInDb(db);
+    await createCoffee(db);
+
+    await refresh();
+  };
+
+  const refresh = async () => {
+    const db = await connectToDatabase();
 
     setCoffeeDrankToday(await getTodaysCoffeeAmount(db));
+    setCoffeeDrankYesterday(await getYesterdaysCoffeeAmount(db));
+    setAverage(await getDailyAverageCoffeeAmount(db));
+    setLatestCoffee(await getLatestCoffee(db));
   };
 
   const loadData = React.useCallback(async () => {
@@ -87,12 +69,11 @@ function App(): React.JSX.Element {
     try {
       const db = await connectToDatabase();
       await createTables(db);
+      // await convertCoffeeDaysToCoffees(db);
 
       console.log(await getTableNames(db));
 
-      setCoffeeDrankToday(await getTodaysCoffeeAmount(db));
-      setCoffeeDrankYesterday(await getYesterdaysCoffeeAmount(db));
-      setAverage(await getDailyAverageCoffeeAmount(db));
+      await refresh();
     } catch (error) {
       console.error(error);
     }
@@ -100,6 +81,12 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     loadData();
+
+    const refreshTimer = setInterval(refresh, 30000);
+
+    return () => {
+      clearInterval(refreshTimer);
+    };
   }, [loadData]);
 
   const backgroundStyle = {
@@ -172,6 +159,18 @@ function App(): React.JSX.Element {
                 },
               ]}>
               On average you drink {average.toFixed(1)} coffees a day.
+            </Text>
+            <Text
+              style={[
+                styles.libreFranklin,
+                {
+                  color: brightBrown,
+                  fontSize: 20,
+                  marginTop: 5,
+                },
+              ]}>
+              The last coffee you drank was at{' '}
+              {new Date(latestCoffee?.createdOn).toLocaleTimeString()}
             </Text>
           </View>
           <View style={{display: 'flex', alignItems: 'center'}}>
