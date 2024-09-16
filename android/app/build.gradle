@@ -83,8 +83,8 @@ android {
         applicationId "com.coffeecounter"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "0.21"
+        versionCode 4
+        versionName "0.3"
     }
     signingConfigs {
         debug {
