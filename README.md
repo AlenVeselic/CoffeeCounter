@@ -104,3 +104,5 @@ The following steps can be repeated as many times as you want a new apk.
 
 In order for the changes to not be cached by Android also bump the version in `./android/app/build.gradle`.
 The versions to be bumped are `versionCode` and `versionName`.
+
+The apk is built into the following directory: `./android/app/outputs/apk/debug` as `app-debug.apk`
