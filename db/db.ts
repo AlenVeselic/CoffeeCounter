@@ -35,8 +35,20 @@ export const createTables = async (db: SQLiteDatabase) => {
     CREATE TABLE IF NOT EXISTS Coffee(
     id INTEGER PRIMARY KEY,
     createdOn INTEGER NOT NULL,
+    modifiedOn INTEGER NOT NULL,
+
+    type TEXT NOT NULL
+    );`,
+    `
+    CREATE TABLE IF NOT EXISTS CaffeineType(
+    id INTEGER PRIMARY KEY,
+    type TEXT NOT NULL,
+
+    createdOn INTEGER NOT NULL,
     modifiedOn INTEGER NOT NULL
-    )`,
+
+    );
+    `,
   ];
   try {
     for (let command of databaseInitiationCommands) {
