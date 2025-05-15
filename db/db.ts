@@ -77,14 +77,15 @@ export const createCoffee = async (
   db: SQLiteDatabase,
   createdOn: number = 0,
   modifiedOn: number = 0,
+  type: string,
 ): Promise<void> => {
   try {
     if (createdOn === 0) createdOn = Date.now();
     if (modifiedOn === 0) modifiedOn = createdOn;
 
     const creationResult = await db.executeSql(
-      'INSERT INTO Coffee(createdOn, modifiedOn) VALUES (?, ?)',
-      [createdOn, modifiedOn],
+      'INSERT INTO Coffee(createdOn, modifiedOn, type) VALUES (?, ?, ?)',
+      [createdOn, modifiedOn, type],
     );
 
     return;
