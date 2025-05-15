@@ -10,9 +10,7 @@
 // TODO: Ability to add monetary value to coffee drank and keep track of that too
 
 import React, {useEffect, useState} from 'react';
-import type {PropsWithChildren} from 'react';
 import {
-  Button,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -22,6 +20,7 @@ import {
   useColorScheme,
   useWindowDimensions,
   View,
+  ViewStyle,
 } from 'react-native';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
@@ -37,20 +36,30 @@ import {
 } from './db/db';
 import {hideNavigationBar} from 'react-native-navigation-bar-color';
 import Icon from 'react-native-vector-icons/AntDesign';
-import {SQLiteDatabase} from 'react-native-sqlite-storage';
+
+interface Coffee {
+  createdOn: string;
+  modifiedOn: string;
+  type: string;
+}
+
+const brightBrown = '#D2957B';
+const darkBrown = '#3C251B';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const [coffeeDrankToday, setCoffeeDrankToday] = useState(0);
-  const [latestCoffee, setLatestCoffee] = useState(null);
+  const [latestCoffee, setLatestCoffee] = useState<Coffee>();
   const [coffeDrankYesterday, setCoffeeDrankYesterday] = useState<any>(0);
   const [average, setAverage] = useState(0);
+  const [selectedCaffeinatedBeverageType, setSelectedCaffeinatedBeverageType] =
+    useState('Regular');
 
   const updateCoffeeAmount = async () => {
     const db = await connectToDatabase();
 
-    await createCoffee(db);
+    await createCoffee(db, 0, 0, selectedCaffeinatedBeverageType);
 
     await refresh();
   };
@@ -93,119 +102,60 @@ function App(): React.JSX.Element {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
-  const brightBrown = '#D2957B';
-  const darkBrown = '#3C251B';
+  const mainContainerStyle: ViewStyle = {
+    //backgroundColor: isDarkMode ? Colors.black : Colors.white,
+    backgroundColor: darkBrown,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    paddingBottom: 100,
+    height: useWindowDimensions().height + 7,
+  };
 
   hideNavigationBar();
 
   return (
-    <SafeAreaView style={[backgroundStyle, {marginTop: 20}]}>
+    <SafeAreaView style={[backgroundStyle, styles.screenMargin]}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={brightBrown}
       />
-      <View
-        style={{
-          backgroundColor: brightBrown,
-          height: 50,
-          display: 'flex',
-          justifyContent: 'center',
-        }}>
-        <Text
-          style={[
-            styles.libreFranklin,
-            {
-              color: darkBrown,
-              fontSize: 30,
-              textAlign: 'center',
-            },
-          ]}>
+      <View style={styles.headerContainer}>
+        <Text style={[styles.libreFranklin, styles.headerText]}>
           Coffee counter
         </Text>
       </View>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        style={[backgroundStyle, {backgroundColor: 'orange'}]}>
-        <View
-          style={{
-            //backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            backgroundColor: darkBrown,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            paddingBottom: 100,
-            height: useWindowDimensions().height + 7,
-          }}>
-          <View style={{alignItems: 'center', marginTop: 125}}>
+        style={[backgroundStyle, styles.highContrastBackground]}>
+        <View style={[mainContainerStyle]}>
+          <View style={styles.topInfoContainer}>
             <Text
-              style={[
-                styles.libreFranklin,
-                {
-                  color: brightBrown,
-                  fontSize: 25,
-                },
-              ]}>
+              style={[styles.libreFranklin, styles.yesterdayCoffeeAmountText]}>
               {coffeDrankYesterday && coffeDrankYesterday > 0
                 ? `You drank ${coffeDrankYesterday} coffees yesterday.`
                 : 'No coffee drank yesterday.'}
             </Text>
-            <Text
-              style={[
-                styles.libreFranklin,
-                {
-                  color: brightBrown,
-                  fontSize: 20,
-                  marginTop: 5,
-                },
-              ]}>
+            <Text style={[styles.libreFranklin, styles.dailyInfoText]}>
               On average you drink {average.toFixed(1)} coffees a day.
             </Text>
-            <Text
-              style={[
-                styles.libreFranklin,
-                {
-                  color: brightBrown,
-                  fontSize: 20,
-                  marginTop: 5,
-                },
-              ]}>
+            <Text style={[styles.libreFranklin, styles.dailyInfoText]}>
               The last coffee you drank was at{' '}
-              {new Date(latestCoffee?.createdOn).toLocaleTimeString()}
+              {latestCoffee?.createdOn
+                ? new Date(latestCoffee.createdOn).toLocaleTimeString()
+                : ''}
             </Text>
           </View>
-          <View style={{display: 'flex', alignItems: 'center'}}>
-            <View
-              style={{
-                position: 'relative',
-                backgroundColor: brightBrown,
-                borderRadius: 150,
-                paddingVertical: 10,
-                width: 300,
-                height: 300,
-              }}>
-              <Text
-                style={[
-                  styles.libreFranklin,
-                  {
-                    fontSize: 200,
-                    textAlign: 'center',
-                    color: darkBrown,
-
-                    flexShrink: 1,
-                  },
-                ]}>
+          <View style={styles.counterContainer}>
+            <View style={styles.coffeeAmountContainer}>
+              <Text style={[styles.libreFranklin, styles.coffeeAmountText]}>
                 {coffeeDrankToday}
               </Text>
             </View>
             <Pressable
               onPress={updateCoffeeAmount}
-              style={{
-                backgroundColor: brightBrown,
-                marginVertical: 20,
-                padding: 10,
-                borderRadius: 200,
-              }}>
-              <Icon name="plus" size={100} color={darkBrown}></Icon>
+              style={styles.addCoffeeButton}>
+              <Icon name="plus" size={100} color={darkBrown} />
             </Pressable>
           </View>
         </View>
@@ -234,6 +184,55 @@ const styles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
+  addCoffeeButton: {
+    backgroundColor: brightBrown,
+    marginVertical: 20,
+    padding: 10,
+    borderRadius: 200,
+  },
+  coffeeAmountText: {
+    fontSize: 200,
+    textAlign: 'center',
+    color: darkBrown,
+
+    flexShrink: 1,
+  },
+  coffeeAmountContainer: {
+    position: 'relative',
+    backgroundColor: brightBrown,
+    borderRadius: 150,
+    paddingVertical: 10,
+    width: 300,
+    height: 300,
+  },
+  dailyInfoText: {
+    color: brightBrown,
+    fontSize: 20,
+    marginTop: 5,
+  },
+  yesterdayCoffeeAmountText: {
+    color: brightBrown,
+    fontSize: 25,
+  },
+  highContrastBackground: {
+    // For testing
+    backgroundColor: 'orange',
+  },
+  headerContainer: {
+    backgroundColor: brightBrown,
+    height: 50,
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  headerText: {
+    color: darkBrown,
+    fontSize: 30,
+    textAlign: 'center',
+  },
+
+  screenMargin: {marginTop: 20},
+  topInfoContainer: {alignItems: 'center', marginTop: 125},
+  counterContainer: {display: 'flex', alignItems: 'center'},
 });
 
 export default App;
