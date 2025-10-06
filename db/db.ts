@@ -37,12 +37,14 @@ export const createTables = async (db: SQLiteDatabase) => {
     createdOn INTEGER NOT NULL,
     modifiedOn INTEGER NOT NULL,
 
-    type TEXT NOT NULL
+    type TEXT NOT NULL,
+    price TEXT
     );`,
     `
     CREATE TABLE IF NOT EXISTS CaffeineType(
     id INTEGER PRIMARY KEY,
     type TEXT NOT NULL,
+    price TEXT,
 
     createdOn INTEGER NOT NULL,
     modifiedOn INTEGER NOT NULL
@@ -78,14 +80,15 @@ export const createCoffee = async (
   createdOn: number = 0,
   modifiedOn: number = 0,
   type: string,
+  price?: string,
 ): Promise<void> => {
   try {
     if (createdOn === 0) createdOn = Date.now();
     if (modifiedOn === 0) modifiedOn = createdOn;
 
     const creationResult = await db.executeSql(
-      'INSERT INTO Coffee(createdOn, modifiedOn, type) VALUES (?, ?, ?)',
-      [createdOn, modifiedOn, type],
+      'INSERT INTO Coffee(createdOn, modifiedOn, type, price) VALUES (?, ?, ?, ?)',
+      [createdOn, modifiedOn, type, price || '0'],
     );
 
     return;
@@ -203,7 +206,10 @@ export const addCoffeeInDb = async (db: SQLiteDatabase): Promise<void> => {
 
 export const getTodaysCoffeeAmount = async (
   db: SQLiteDatabase,
+  type: string = 'All',
 ): Promise<number> => {
+  console.log('Fetching todays coffee amount of type: ', type);
+
   const allCoffees: any[] = await getCoffees(db);
 
   const currentDate = new Date();
@@ -215,12 +221,50 @@ export const getTodaysCoffeeAmount = async (
     return currentDate.getTime() === coffeeDate.getTime();
   });
 
+  const coffeeSpent = todaysCoffees.reduce((total, coffee) => {
+    // Assuming coffee.price is a string that can be converted to a number
+    const price = parseFloat(coffee.price) || 0;
+    return total + price;
+  }, 0);
+
+  console.log(`Total spent on coffee today: $${coffeeSpent.toFixed(2)}`);
+
+  if (type !== 'All') {
+    const filteredCoffees = todaysCoffees.filter(
+      coffee => coffee.type === type,
+    );
+    console.log(`Filtered todays ${type} drank: `, filteredCoffees.length);
+    return filteredCoffees.length;
+  }
+  console.log(`Todays ${type} drank: `, todaysCoffees.length);
+
   try {
     return todaysCoffees.length;
   } catch (e) {
     console.error('ERROR: ', e);
     return 0;
   }
+};
+
+export const getMoneySpentOnCoffeeToday = async (
+  db: SQLiteDatabase,
+): Promise<string> => {
+  const allCoffees: any[] = await getCoffees(db);
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0);
+  const todaysCoffees = allCoffees.filter(coffee => {
+    const coffeeDate = new Date(coffee.createdOn);
+    coffeeDate.setHours(0, 0, 0, 0);
+    return currentDate.getTime() === coffeeDate.getTime();
+  });
+
+  const coffeeSpent = todaysCoffees.reduce((total, coffee) => {
+    // Assuming coffee.price is a string that can be converted to a number
+    const price = parseFloat(coffee.price) || 0;
+    return total + price;
+  }, 0);
+
+  return parseFloat(coffeeSpent.toFixed(2)).toString();
 };
 
 export const getYesterdaysCoffeeAmount = async (
