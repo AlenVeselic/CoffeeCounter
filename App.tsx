@@ -67,7 +67,7 @@ function App(): React.JSX.Element {
   const [coffeDrankYesterday, setCoffeeDrankYesterday] = useState<any>(0);
   const [average, setAverage] = useState(0);
   const [selectedCaffeinatedBeverageType, setSelectedCaffeinatedBeverageType] =
-    useState<CaffeineType>(CaffeineTypes[2]);
+    useState<CaffeineType>(CaffeineTypes[0]);
 
   const [moneySpentToday, setMoneySpentToday] = useState('');
 
